@@ -6,10 +6,6 @@ if __name__ == '__main__':
     config = configuration.Configuration()
     config.read("assets/configuration.json")
 
-    controller = controller.Controller(config)
-
-    window = view.mainWindow.MainWindow(controller.addTherapist)
-    for openingTimeDay in config.openingTime:
-        window.addWeekday(openingTimeDay, config.numberOfRooms)
-
+    window = view.mainWindow.MainWindow()
+    controller = controller.Controller(config, window)
     window.mainloop()

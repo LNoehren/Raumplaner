@@ -1,15 +1,17 @@
 import model.room
 import model.therapist
 import utils
+import view.mainWindow
 
 
 class Controller:
 
-    def __init__(self, config):
+    def __init__(self, config, ui):
         self.config = config
         self.rooms = {}
         self.therapists = []
         self.lastUsedThId = -1
+        self.ui = ui
 
         for openingDay in config.openingTime:
             roomList = []
@@ -18,7 +20,13 @@ class Controller:
                 closingTime = utils.timeStringToTime(config.closingTime[openingDay])
                 roomList.append(model.room.Room(i + 1, openingTime, closingTime, config.minimalTimeSlot))
 
+            ui.addWeekday(openingDay, len(roomList[0].occupation) - 1, self.addTherapist)
+
+            for i in range(len(roomList)):
+                ui.addRoom(openingDay, i)
+
             self.rooms[openingDay] = roomList
+
 
     """
     Function ads a therapist on the given day in the given time window.

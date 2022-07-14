@@ -1,4 +1,4 @@
-from tkinter import *
+from tkinter import Canvas
 
 
 # a subclass of Canvas for dealing with resizing of windows
