@@ -1,0 +1,14 @@
+{
+  "numberOfRooms": 4,
+  "minimalTimeSlot": 20,
+  "openingTime": {"Montag": "08:00",
+                  "Dienstag": "08:00",
+                  "Mittwoch": "08:00",
+                  "Donnerstag": "08:00",
+                  "Freitag": "08:00"},
+  "closingTime": {"Montag": "19:00",
+                  "Dienstag": "19:00",
+                  "Mittwoch": "19:00",
+                  "Donnerstag": "19:00",
+                  "Freitag": "16:00"}
+}

@@ -26,7 +26,7 @@ class MainWindow(tk.Tk):
 
         # window.minsize(min_width, min_height)
         # window.maxsize(min_height, max_height)
-        self.iconbitmap('./assets/logo.ico')
+        self.iconbitmap('../assets/logo.ico')
 
         # add a scrollbar to the window
         # TODO funktioniert nicht richtig mit dem ResizingCanvas. Entweder funktioniert die scrollbar, oder das resizing...

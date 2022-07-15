@@ -4,7 +4,7 @@ import configuration
 
 if __name__ == '__main__':
     config = configuration.Configuration()
-    config.read("assets/configuration.json")
+    config.read("../configuration/configuration.json")
 
     window = view.mainWindow.MainWindow()
     controller = controller.Controller(config, window)
