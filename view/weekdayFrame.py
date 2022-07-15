@@ -36,12 +36,15 @@ class WeekdayFrame(ttk.LabelFrame):
         self.therapistAddButton.grid(column=0, row=self.usedRows, sticky="w")
         self.usedRows += 1
 
+        self.rooms = {}
+        self.therapists = {}
+
     def addRoom(self, roomName):
         roomNameLabel = ttk.Label(self, text=f"Raum {roomName}")
         roomNameLabel.grid(column=0, row=self.usedRows)
 
-        canvas = view.timeOccupancyCanvas.TimeOccupancyCanvas(self, self.nrTimeSlots, True, height=12, bg="grey",
-                                                              borderwidth=2, relief="sunken")
+        canvas = view.timeOccupancyCanvas.TimeOccupancyCanvas(self, self.nrTimeSlots, True,
+                                                              height=12, bg="grey", borderwidth=2, relief="sunken")
         canvas.grid(column=1, row=self.usedRows, sticky="ew")
 
         self.usedRows += 1
@@ -50,14 +53,16 @@ class WeekdayFrame(ttk.LabelFrame):
         self.usedRows += 1
         self.moveTherapistEntryRow()
 
+        self.rooms[roomName] = canvas
+
     def addTherapist(self, name):
         if name == "":
             return
 
-        print(f"Adding Therapist {name}!")
         ttk.Label(self, text=name).grid(column=0, row=self.usedRows)
 
-        canvas = view.timeOccupancyCanvas.TimeOccupancyCanvas(self, self.nrTimeSlots, False, height=12, bg="grey",
+        canvas = view.timeOccupancyCanvas.TimeOccupancyCanvas(self, self.nrTimeSlots, False, height=12,
+                                                              bg=view.timeOccupancyCanvas.INACTIVE_THERAPIST_COLOR,
                                                               borderwidth=2, relief="sunken")
         canvas.grid(column=1, row=self.usedRows, sticky="ew")
 
@@ -65,11 +70,23 @@ class WeekdayFrame(ttk.LabelFrame):
         self.moveTherapistEntryRow()
         self.therapistEntryField.delete(0, "end")
 
-        remainingTimeSlots = self.addTherapistCallback(self.day, name, 480, 960)  # TODO start and end times
+        therapistTimeCallback = self.addTherapistCallback(self.day, name)
+        canvas.setTherapistTimes = therapistTimeCallback
 
-        if len(remainingTimeSlots) > 0:
-            print(remainingTimeSlots)
+        self.therapists[name] = canvas
 
     def moveTherapistEntryRow(self):
         self.therapistEntryField.grid(column=1, row=self.usedRows, sticky=tk.W)
         self.therapistAddButton.grid(column=0, row=self.usedRows)
+
+    def setRoomOccupation(self, roomName, occupationSlot, isOccupied):
+        if isOccupied:
+            self.rooms[roomName].setSlotColors([occupationSlot], view.timeOccupancyCanvas.OCCUPIED_ROOM_COLOR)
+        else:
+            self.rooms[roomName].setSlotColors([occupationSlot], view.timeOccupancyCanvas.FREE_ROOM_COLOR)
+
+    def setTherapistAssignment(self, therapistName, occupationSlot, wasAssigned):
+        if wasAssigned:
+            self.therapists[therapistName].setSlotColors(occupationSlot, view.timeOccupancyCanvas.ACTIVE_THERAPIST_COLOR)
+        else:
+            self.therapists[therapistName].setSlotColors(occupationSlot, view.timeOccupancyCanvas.OCCUPIED_ROOM_COLOR)

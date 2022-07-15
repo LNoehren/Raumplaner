@@ -29,26 +29,35 @@ class MainWindow(tk.Tk):
         self.iconbitmap('./assets/logo.ico')
 
         # add a scrollbar to the window
+        # TODO funktioniert nicht richtig mit dem ResizingCanvas. Entweder funktioniert die scrollbar, oder das resizing...
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=0)
         self.rowconfigure(0, weight=1)
-        canvas = view.resizingCanvas.ResizingCanvas(self, height=self.windowHeight, width=self.windowWidth)
-        scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
-        canvas.grid(column=0, row=0, sticky="news")
+        self.mainCanvas = view.resizingCanvas.ResizingCanvas(self, height=self.windowHeight, width=self.windowWidth, resizeHeight=True)
+        scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.mainCanvas.yview)
+        self.mainCanvas.grid(column=0, row=0, sticky="news")
         scrollbar.grid(column=1, row=0, sticky="news")
-        self.scrollableFrame = ttk.Frame(canvas)
+        self.scrollableFrame = ttk.Frame(self.mainCanvas)
         self.scrollableFrame.columnconfigure(0, weight=1)
-        self.scrollableFrame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
-        canvas.create_window((0, 0), window=self.scrollableFrame, anchor="nw", height=self.windowHeight, width=self.windowWidth-10)
-        canvas.configure(yscrollcommand=scrollbar.set)
-        canvas.addtag_all("all")
+        self.scrollableFrame.bind("<Configure>", lambda e: self.mainCanvas.configure(scrollregion=(0, 0, 0, self.windowHeight)))
+        #self.scrollableFrame.bind("<Configure>", lambda e: self.mainCanvas.configure(scrollregion=self.mainCanvas.bbox("all")))
+        self.mainCanvas.create_window((0, 0), window=self.scrollableFrame, anchor="nw", height=self.windowHeight, width=self.windowWidth-10)
+        self.mainCanvas.configure(yscrollcommand=scrollbar.set)
+        self.mainCanvas.addtag_all("all")
         # TODO muss hier noch das <MouseWheel> irgendwie binden!
 
         self.weekdayFrames = {}
 
     def addWeekday(self, day, nrOfTimeSlots, addTherapistCallback):
-        self.weekdayFrames[day] = view.weekdayFrame.WeekdayFrame(self.scrollableFrame, day, nrOfTimeSlots, addTherapistCallback)
+        self.weekdayFrames[day] = view.weekdayFrame.WeekdayFrame(self.scrollableFrame, day, nrOfTimeSlots,
+                                                                 addTherapistCallback)
         self.weekdayFrames[day].grid(row=len(self.weekdayFrames)-1, ipadx=10, ipady=5, padx=10, pady=0, sticky="ew")
 
     def addRoom(self, day, roomName):
         self.weekdayFrames[day].addRoom(roomName)
+
+    def setRoomOccupation(self, day, room, occupationSlot, isOccupied):
+        self.weekdayFrames[day].setRoomOccupation(room, occupationSlot, isOccupied)
+
+    def setTherapistAssignment(self, day, therapistName, occupationSlot, wasAssigned):
+        self.weekdayFrames[day].setTherapistAssignment(therapistName, occupationSlot, wasAssigned)

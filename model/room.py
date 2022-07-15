@@ -13,6 +13,9 @@ class Room:
     def computeOccupationIndexFromTime(self, time):
         return int((time - self.openingTime)/self.timSlotSize)
 
+    def computeTimeFromOccupationIndex(self, index):
+        return self.openingTime + index * self.timSlotSize
+
     def getOccupation(self, time):
         if time < self.openingTime or time > self.closingTime:
             return -2
@@ -54,3 +57,15 @@ class Room:
                   f"(at {utils.timeToTimeString(timeSlot)})")
         else:
             self.occupation[adaptedTimeSlot] = thId
+
+    def removeOccupation(self, timeSlot):
+        if timeSlot < self.openingTime or timeSlot > self.closingTime:
+            return
+
+        adaptedTimeSlot = self.computeOccupationIndexFromTime(timeSlot)
+
+        if self.occupation[adaptedTimeSlot] == -1:
+            print(f"Trying to remove therapist from room {self.id} when it is not occupied "
+                  f"(at {utils.timeToTimeString(timeSlot)})")
+        else:
+            self.occupation[adaptedTimeSlot] = -1
