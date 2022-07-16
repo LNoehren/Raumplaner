@@ -48,8 +48,8 @@ class MainWindow(tk.Tk):
 
         self.weekdayFrames = {}
 
-    def addWeekday(self, day, nrOfTimeSlots, addTherapistCallback):
-        self.weekdayFrames[day] = view.weekdayFrame.WeekdayFrame(self.scrollableFrame, day, nrOfTimeSlots,
+    def addWeekday(self, day, roomList, addTherapistCallback):
+        self.weekdayFrames[day] = view.weekdayFrame.WeekdayFrame(self.scrollableFrame, day, roomList,
                                                                  addTherapistCallback)
         self.weekdayFrames[day].grid(row=len(self.weekdayFrames)-1, ipadx=10, ipady=5, padx=10, pady=0, sticky="ew")
 

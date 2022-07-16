@@ -20,10 +20,7 @@ class Controller:
                 closingTime = utils.timeStringToTime(config.closingTime[openingDay])
                 roomList.append(model.room.Room(i+1, openingTime, closingTime, config.minimalTimeSlot))
 
-            ui.addWeekday(openingDay, len(roomList[0].occupation) - 1, self.createTherapist)
-
-            for i in range(len(roomList)):
-                ui.addRoom(openingDay, i+1)
+            ui.addWeekday(openingDay, roomList, self.createTherapist)
 
             self.rooms[openingDay] = roomList
 
