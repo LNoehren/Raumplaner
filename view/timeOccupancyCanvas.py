@@ -63,12 +63,13 @@ class TimeOccupancyCanvas(view.resizingCanvas.ResizingCanvas):
         if len(self.clickPos) != 0:
             startRectId = self.getTimeSlotFromPos(self.clickPos[0], self.clickPos[1])
             endRectId = self.getTimeSlotFromPos(event.x, event.y)
-            idRange = list(range(startRectId, endRectId+1) if startRectId < endRectId else range(endRectId, startRectId+1))
+            idRangeUi = list(range(startRectId, endRectId+1) if startRectId < endRectId else range(endRectId, startRectId+1))
+            idRangeController = list(range(startRectId - 1, endRectId) if startRectId < endRectId else range(endRectId - 1, startRectId))
 
             if self.clickedOnInactive:
-                self.setSlotColors(idRange, ACTIVE_THERAPIST_COLOR)
+                self.setSlotColors(idRangeUi, ACTIVE_THERAPIST_COLOR)
             else:
-                self.setSlotColors(idRange, "")
-            self.setTherapistTimes(idRange, self.clickedOnInactive)
+                self.setSlotColors(idRangeUi, "")
+            self.setTherapistTimes(idRangeController, self.clickedOnInactive)
 
             self.clickPos = []
