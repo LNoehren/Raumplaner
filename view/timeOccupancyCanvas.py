@@ -3,19 +3,19 @@ import view.resizingCanvas
 
 FREE_ROOM_COLOR = "green"
 OCCUPIED_ROOM_COLOR = "red"
-ACTIVE_THERAPIST_COLOR = "yellow"
 INACTIVE_THERAPIST_COLOR = "grey"
 
 
 class TimeOccupancyCanvas(view.resizingCanvas.ResizingCanvas):
 
-    def __init__(self, parent, nrTimeSlots, isRoomOccupancy, **kwargs):
+    def __init__(self, parent, nrTimeSlots, isRoomOccupancy, activeColor="", **kwargs):
         super().__init__(parent, **kwargs)
 
         self.setTherapistTimes = None
         self.nrTimeSlots = nrTimeSlots
         self.timeSlotWidth = self.width / nrTimeSlots
         self.timeSlots = []
+        self.activeColor = activeColor
 
         self.clickPos = []
         self.clickedOnInactive = False
@@ -25,7 +25,7 @@ class TimeOccupancyCanvas(view.resizingCanvas.ResizingCanvas):
             if isRoomOccupancy:
                 rect = self.create_rectangle(startX, 0, startX + self.timeSlotWidth, self.height + 4, fill=FREE_ROOM_COLOR)
             else:
-                rect = self.create_rectangle(startX, 0, startX + self.timeSlotWidth, self.height + 4, activefill=ACTIVE_THERAPIST_COLOR)
+                rect = self.create_rectangle(startX, 0, startX + self.timeSlotWidth, self.height + 4, activefill=self.activeColor)
                 self.bind("<Button-1>", self.mouseClicked)
                 self.bind("<ButtonRelease-1>", self.mouseReleased)
 
@@ -39,6 +39,13 @@ class TimeOccupancyCanvas(view.resizingCanvas.ResizingCanvas):
     def setSlotColors(self, slotList, color):
         for rectId in slotList:
             self.itemconfig(rectId, fill=color)
+
+    def changeActiveColor(self, newColor):
+        for slot in self.timeSlots:
+            self.itemconfig(slot, activefill=newColor)
+            if self.itemcget(slot, "fill") == self.activeColor:
+                self.itemconfig(slot, fill=newColor)
+        self.activeColor = newColor
 
     def getTimeSlotFromPos(self, x, y):
         if y < 0 or y > self.height + 4 or x < 0 or x > self.width:
@@ -67,7 +74,7 @@ class TimeOccupancyCanvas(view.resizingCanvas.ResizingCanvas):
             idRangeController = list(range(startRectId - 1, endRectId) if startRectId < endRectId else range(endRectId - 1, startRectId))
 
             if self.clickedOnInactive:
-                self.setSlotColors(idRangeUi, ACTIVE_THERAPIST_COLOR)
+                self.setSlotColors(idRangeUi, self.activeColor)
             else:
                 self.setSlotColors(idRangeUi, "")
             self.setTherapistTimes(idRangeController, self.clickedOnInactive)

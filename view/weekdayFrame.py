@@ -8,6 +8,9 @@ import view.timeOccupancyCanvas
 
 class WeekdayFrame(ttk.LabelFrame):
 
+    possibleTherapistColors = ["#512E5F", "#4A235A", "#154360", "#1B4F72", "#0E6251", "#0B5345", "#145A32", "#186A3B",
+                               "#7D6608", "#7E5109", "#784212", "#6E2C00", "#1B2631", "#17202A"]
+
     def __init__(self, parent, day, roomList, addTherapistCallback, **kwargs):
         super().__init__(parent, **kwargs)
 
@@ -16,7 +19,7 @@ class WeekdayFrame(ttk.LabelFrame):
         self.addTherapistCallback = addTherapistCallback
 
         self.roomWidgets = {}
-        self.therapists = {}
+        self.therapistData = {}
 
         s = ttk.Style()
         s.configure('Bold.TLabel', font=('TkDefaultFont', 14))
@@ -24,6 +27,8 @@ class WeekdayFrame(ttk.LabelFrame):
         self.configure(labelwidget=label)
         self.columnconfigure(0, weight=0)
         self.columnconfigure(1, weight=1)
+        self.columnconfigure(2, weight=0)
+        self.columnconfigure(3, weight=0)
 
         self.usedRows = 0
 
@@ -68,24 +73,59 @@ class WeekdayFrame(ttk.LabelFrame):
         self.roomWidgets[room.id] = canvas
 
     def addTherapist(self, name):
-        if name == "":
+        if name == "" or name in self.therapistData:
             return
 
-        ttk.Label(self, text=name).grid(column=0, row=self.usedRows)
+        curTherapistData = {}
+        curTherapistData["label"] = ttk.Label(self, text=name)
+        curTherapistData["label"].grid(column=0, row=self.usedRows)
 
-        canvas = view.timeOccupancyCanvas.TimeOccupancyCanvas(self, len(self.rooms[0].occupation), False, height=12,
-                                                              bg=view.timeOccupancyCanvas.INACTIVE_THERAPIST_COLOR,
-                                                              borderwidth=2, relief="sunken")
-        canvas.grid(column=1, row=self.usedRows, sticky="ew")
+        curTherapistData["colorVar"] = tk.StringVar(self, WeekdayFrame.possibleTherapistColors[0])
+        curTherapistData["colorMenu"] = ttk.OptionMenu(self, curTherapistData["colorVar"], *WeekdayFrame.possibleTherapistColors)
+        curTherapistData["colorMenu"].grid(column=2, row=self.usedRows)
+
+        curTherapistData["canvas"] = view.timeOccupancyCanvas.TimeOccupancyCanvas(self, len(self.rooms[0].occupation), False, activeColor=curTherapistData["colorVar"].get(), height=12,
+                                                              bg=view.timeOccupancyCanvas.INACTIVE_THERAPIST_COLOR, borderwidth=2, relief="sunken")
+        curTherapistData["canvas"].grid(column=1, row=self.usedRows, sticky="ew")
+
+        curTherapistData["removeBtn"] = ttk.Button(self, text="-", command=lambda: self.removeTherapist(name))
+        curTherapistData["removeBtn"].grid(column=3, row=self.usedRows)
 
         self.usedRows += 1
         self.moveTherapistEntryRow()
         self.therapistEntryField.delete(0, "end")
 
         therapistTimeCallback = self.addTherapistCallback(self.day, name)
-        canvas.setTherapistTimes = therapistTimeCallback
+        curTherapistData["canvas"].setTherapistTimes = therapistTimeCallback
 
-        self.therapists[name] = canvas
+        self.therapistData[name] = curTherapistData
+        curTherapistData["colorVar"].trace("w", lambda a, b, c: self.updateTherapistColor(name))
+
+    def updateTherapistColor(self, name):
+        self.therapistData[name]["canvas"].changeActiveColor(self.therapistData[name]["colorVar"].get())
+
+    def removeTherapist(self, name):
+        self.addTherapistCallback(self.day, name, delete=True)
+
+        usedRow = self.therapistData[name]["label"].grid_info()["row"]
+        self.therapistData[name]["label"].destroy()
+        self.therapistData[name]["canvas"].destroy()
+        self.therapistData[name]["colorMenu"].destroy()
+        self.therapistData[name]["removeBtn"].destroy()
+        del self.therapistData[name]
+
+        self.moveLowerTherapistsUp(usedRow+1)
+        self.usedRows -= 1
+        self.moveTherapistEntryRow()
+
+    def moveLowerTherapistsUp(self, beginRow):
+        for therapistName in self.therapistData:
+            oldRow = self.therapistData[therapistName]["label"].grid_info()["row"]
+            if oldRow >= beginRow:
+                self.therapistData[therapistName]["label"].grid(column=0, row=oldRow-1)
+                self.therapistData[therapistName]["canvas"].grid(column=1, row=oldRow-1, sticky="ew")
+                self.therapistData[therapistName]["colorMenu"].grid(column=2, row=oldRow-1)
+                self.therapistData[therapistName]["removeBtn"].grid(column=3, row=oldRow-1)
 
     def moveTherapistEntryRow(self):
         self.therapistEntryField.grid(column=1, row=self.usedRows, sticky=tk.W)
@@ -99,6 +139,6 @@ class WeekdayFrame(ttk.LabelFrame):
 
     def setTherapistAssignment(self, therapistName, occupationSlot, wasAssigned):
         if wasAssigned:
-            self.therapists[therapistName].setSlotColors(occupationSlot, view.timeOccupancyCanvas.ACTIVE_THERAPIST_COLOR)
+            self.therapistData[therapistName]["canvas"].setSlotColors(occupationSlot, self.therapistData[therapistName]["colorVar"].get())
         else:
-            self.therapists[therapistName].setSlotColors(occupationSlot, view.timeOccupancyCanvas.OCCUPIED_ROOM_COLOR)
+            self.therapistData[therapistName]["canvas"].setSlotColors(occupationSlot, view.timeOccupancyCanvas.OCCUPIED_ROOM_COLOR)

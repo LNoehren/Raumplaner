@@ -24,21 +24,39 @@ class Controller:
 
             self.rooms[openingDay] = roomList
 
-    def createTherapist(self, weekday, name):
+    def createTherapist(self, weekday, name, delete=False):
         """
         Creates a new therapist
         :param weekday: The weekday on which the therapist ist active
         :param name: The name of the therapist to be created
+        :param delete: If this is true the therapist with the given name is deleted instead of created
         :return: A lmbda function that can be used to set the time slots of the created therapist. The function has
         a list of time slots as input parameter
         """
-        print(f"Adding therapist {name} on {weekday}")
+        if delete:
+            print(f"Deleting therapist {name} on {weekday}")
+            selectedId = -1
+            for therapistId in self.therapists:
+                if self.therapists[therapistId].name == name: # TODO löscht den Therapeuten aktuell eventuell an jedem wochentag...
+                    selectedId = therapistId
+                    # first delete time slots so the room can be updated easily
+                    self.therapists[therapistId].timeSlots = []
+                    self.therapists[therapistId].assignedRooms = {}
+                    self.therapists[therapistId].unassignedTimeSlots = []
+                    self.distributeTherapistsToRooms(weekday)
+                    break
 
-        self.lastUsedThId += 1
-        newTherapist = model.therapist.Therapist(self.lastUsedThId, name)
-        self.therapists[self.lastUsedThId] = newTherapist
+            if selectedId != -1:
+                # now also delete model object
+                del self.therapists[selectedId]
+        else:
+            print(f"Adding therapist {name} on {weekday}")
 
-        return lambda timeSlots, setActive: self.setTherapistTimes(weekday, newTherapist.id, timeSlots, setActive)
+            self.lastUsedThId += 1
+            newTherapist = model.therapist.Therapist(self.lastUsedThId, name)
+            self.therapists[self.lastUsedThId] = newTherapist
+
+            return lambda timeSlots, setActive: self.setTherapistTimes(weekday, newTherapist.id, timeSlots, setActive)
 
     def setTherapistTimes(self, weekday, therapistId, timeSlots, setActive):
         therapist = self.therapists[therapistId]
