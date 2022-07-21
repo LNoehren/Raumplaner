@@ -1,11 +1,12 @@
 class Therapist:
 
-    def __init__(self, thId, name):
+    def __init__(self, thId, name, weekday):
         self.id = thId
         self.name = name
         self.timeSlots = []
         self.assignedRooms = {}
         self.unassignedTimeSlots = []
+        self.assignedWeekday = weekday
 
     def addTimeSlots(self, timeSlots):
         for slot in timeSlots:

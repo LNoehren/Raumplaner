@@ -8,18 +8,23 @@ import view.timeOccupancyCanvas
 
 class WeekdayFrame(ttk.LabelFrame):
 
-    possibleTherapistColors = ["#512E5F", "#4A235A", "#154360", "#1B4F72", "#0E6251", "#0B5345", "#145A32", "#186A3B",
-                               "#7D6608", "#7E5109", "#784212", "#6E2C00", "#1B2631", "#17202A"]
+    possibleTherapistColors = ["#ffc600", "#ffe600", "#acff00", "#00ffa4", "#a474cd", "#8a8bff", "#82b7ff",
+                               "#6ad0de", "#78debd", "#fffff0", "#906d8e", "#673147"]
 
     def __init__(self, parent, day, roomList, addTherapistCallback, **kwargs):
         super().__init__(parent, **kwargs)
 
         self.day = day
-        self.rooms = roomList
-        self.addTherapistCallback = addTherapistCallback
 
-        self.roomWidgets = {}
+        # room data contains:
+        # - modelList: List of model.room objects
+        # - widgetList: dict of timeOccupancyCanvas objects for the rooms. Key is room name/ID
+        # - occupations: dict of occupations for each room. Key is room name/ID. The values are dicts where the
+        #   key is the therapist name and the value is a list of slots that he occupies
+        self.roomData = {"modelList": roomList, "widgetList" : {}, "occupations": {}}
+
         self.therapistData = {}
+        self.addTherapistCallback = addTherapistCallback
 
         s = ttk.Style()
         s.configure('Bold.TLabel', font=('TkDefaultFont', 14))
@@ -36,14 +41,14 @@ class WeekdayFrame(ttk.LabelFrame):
         timeCanvas.grid(column=1, row=self.usedRows, sticky="ew")
         self.usedRows += 1
 
-        for room in self.rooms:
+        for room in self.roomData["modelList"]:
             self.addRoom(room)
 
-        referenceRoomWidget = self.roomWidgets[self.rooms[0].id]
-        for i in range(0, len(self.rooms[0].occupation), 1):
+        referenceRoomWidget = self.roomData["widgetList"][self.roomData["modelList"][0].id]
+        for i in range(0, len(self.roomData["modelList"][0].occupation), 1):
             rectPos = referenceRoomWidget.coords(referenceRoomWidget.timeSlots[i])
             rectPos[0] += 5 if i == 0 else 2
-            timeValue = self.rooms[0].computeTimeFromOccupationIndex(i)
+            timeValue = self.roomData["modelList"][0].computeTimeFromOccupationIndex(i)
             timeCanvas.create_text(rectPos[0], 14, text=utils.timeToTimeString(timeValue), angle=35)
 
         self.separatorLeft = ttk.Separator(self, orient="horizontal")
@@ -70,7 +75,8 @@ class WeekdayFrame(ttk.LabelFrame):
         canvas.grid(column=1, row=self.usedRows, sticky="ew")
 
         self.usedRows += 1
-        self.roomWidgets[room.id] = canvas
+        self.roomData["widgetList"][room.id] = canvas
+        self.roomData["occupations"][room.id] = {}
 
     def addTherapist(self, name):
         if name == "" or name in self.therapistData:
@@ -80,11 +86,13 @@ class WeekdayFrame(ttk.LabelFrame):
         curTherapistData["label"] = ttk.Label(self, text=name)
         curTherapistData["label"].grid(column=0, row=self.usedRows)
 
-        curTherapistData["colorVar"] = tk.StringVar(self, WeekdayFrame.possibleTherapistColors[0])
-        curTherapistData["colorMenu"] = ttk.OptionMenu(self, curTherapistData["colorVar"], *WeekdayFrame.possibleTherapistColors)
+        colorId = len(self.therapistData) % len(WeekdayFrame.possibleTherapistColors)
+        curTherapistData["colorVar"] = tk.StringVar(self, WeekdayFrame.possibleTherapistColors[colorId])
+        curTherapistData["colorMenu"] = ttk.OptionMenu(self, curTherapistData["colorVar"],
+                                                       curTherapistData["colorVar"].get(), *WeekdayFrame.possibleTherapistColors)
         curTherapistData["colorMenu"].grid(column=2, row=self.usedRows)
 
-        curTherapistData["canvas"] = view.timeOccupancyCanvas.TimeOccupancyCanvas(self, len(self.rooms[0].occupation), False, activeColor=curTherapistData["colorVar"].get(), height=12,
+        curTherapistData["canvas"] = view.timeOccupancyCanvas.TimeOccupancyCanvas(self, len(self.roomData["modelList"][0].occupation), False, activeColor=curTherapistData["colorVar"].get(), height=12,
                                                               bg=view.timeOccupancyCanvas.INACTIVE_THERAPIST_COLOR, borderwidth=2, relief="sunken")
         curTherapistData["canvas"].grid(column=1, row=self.usedRows, sticky="ew")
 
@@ -103,6 +111,10 @@ class WeekdayFrame(ttk.LabelFrame):
 
     def updateTherapistColor(self, name):
         self.therapistData[name]["canvas"].changeActiveColor(self.therapistData[name]["colorVar"].get())
+        for roomOccs in self.roomData["occupations"]:
+            if name in self.roomData["occupations"][roomOccs]:
+                self.roomData["widgetList"][roomOccs].setSlotColors(self.roomData["occupations"][roomOccs][name],
+                                                                    self.therapistData[name]["colorVar"].get())
 
     def removeTherapist(self, name):
         self.addTherapistCallback(self.day, name, delete=True)
@@ -131,11 +143,19 @@ class WeekdayFrame(ttk.LabelFrame):
         self.therapistEntryField.grid(column=1, row=self.usedRows, sticky=tk.W)
         self.therapistAddButton.grid(column=0, row=self.usedRows)
 
-    def setRoomOccupation(self, roomName, occupationSlot, isOccupied):
-        if isOccupied:
-            self.roomWidgets[roomName].setSlotColors([occupationSlot], view.timeOccupancyCanvas.OCCUPIED_ROOM_COLOR)
+    def setRoomOccupation(self, roomName, occupationSlot, therapistName):
+        if therapistName != "":
+            self.roomData["widgetList"][roomName].setSlotColors([occupationSlot],  self.therapistData[therapistName]["colorVar"].get())
+
+            if therapistName not in self.roomData["occupations"][roomName]:
+                self.roomData["occupations"][roomName][therapistName] = []
+            self.roomData["occupations"][roomName][therapistName].append(occupationSlot)
         else:
-            self.roomWidgets[roomName].setSlotColors([occupationSlot], view.timeOccupancyCanvas.FREE_ROOM_COLOR)
+            self.roomData["widgetList"][roomName].setSlotColors([occupationSlot], view.timeOccupancyCanvas.FREE_ROOM_COLOR)
+
+            for therapist in self.roomData["occupations"][roomName]:
+                if occupationSlot in self.roomData["occupations"][roomName][therapist]:
+                    self.roomData["occupations"][roomName][therapist].remove(occupationSlot)
 
     def setTherapistAssignment(self, therapistName, occupationSlot, wasAssigned):
         if wasAssigned:

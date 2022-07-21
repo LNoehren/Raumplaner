@@ -56,9 +56,9 @@ class MainWindow(tk.Tk):
     def addRoom(self, day, roomName):
         self.weekdayFrames[day].addRoom(roomName)
 
-    def setRoomOccupation(self, day, room, occupationSlot, isOccupied):
+    def setRoomOccupation(self, day, room, occupationSlot, therapistName):
         occupationSlot += 1  # IDs in the UI are increased by 1 compared to controller...
-        self.weekdayFrames[day].setRoomOccupation(room, occupationSlot, isOccupied)
+        self.weekdayFrames[day].setRoomOccupation(room, occupationSlot, therapistName)
 
     def setTherapistAssignment(self, day, therapistName, occupationSlotList, wasAssigned):
         occupationSlotList = [slot + 1 for slot in occupationSlotList]  # IDs in the UI are increased by 1 compared to controller...

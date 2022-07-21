@@ -52,6 +52,10 @@ class TimeOccupancyCanvas(view.resizingCanvas.ResizingCanvas):
             return -1
 
         timeSlotIndex = int(x/self.timeSlotWidth)
+
+        if timeSlotIndex >= len(self.timeSlots):
+            return -1
+
         return self.timeSlots[timeSlotIndex]
 
     def mouseClicked(self, event):

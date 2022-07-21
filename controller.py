@@ -37,7 +37,7 @@ class Controller:
             print(f"Deleting therapist {name} on {weekday}")
             selectedId = -1
             for therapistId in self.therapists:
-                if self.therapists[therapistId].name == name: # TODO löscht den Therapeuten aktuell eventuell an jedem wochentag...
+                if self.therapists[therapistId].name == name and self.therapists[therapistId].assignedWeekday == weekday:
                     selectedId = therapistId
                     # first delete time slots so the room can be updated easily
                     self.therapists[therapistId].timeSlots = []
@@ -53,7 +53,7 @@ class Controller:
             print(f"Adding therapist {name} on {weekday}")
 
             self.lastUsedThId += 1
-            newTherapist = model.therapist.Therapist(self.lastUsedThId, name)
+            newTherapist = model.therapist.Therapist(self.lastUsedThId, name, weekday)
             self.therapists[self.lastUsedThId] = newTherapist
 
             return lambda timeSlots, setActive: self.setTherapistTimes(weekday, newTherapist.id, timeSlots, setActive)
@@ -78,7 +78,7 @@ class Controller:
                     therapist = self.therapists[room.occupation[i]]
                     if therapist.timeSlots.count(i) == 0:
                         room.occupation[i] = -1
-                        self.ui.setRoomOccupation(weekday, room.id, i, False)
+                        self.ui.setRoomOccupation(weekday, room.id, i, "")
 
         # now insert all unassigned therapist time slots into rooms
         for therapist in self.therapists.values():
@@ -90,7 +90,7 @@ class Controller:
                         if not room.isOccupied(time):
                             room.addOccupation(therapist.id, time)
                             therapist.assignedRooms[timeSlot] = room.id
-                            self.ui.setRoomOccupation(weekday, room.id, timeSlot, True)
+                            self.ui.setRoomOccupation(weekday, room.id, timeSlot, therapist.name)
 
                             remainingTimeWindows.remove(timeSlot)
                             break
