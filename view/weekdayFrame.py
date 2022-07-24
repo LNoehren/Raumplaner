@@ -78,7 +78,7 @@ class WeekdayFrame(ttk.LabelFrame):
         self.roomData["widgetList"][room.id] = canvas
         self.roomData["occupations"][room.id] = {}
 
-    def addTherapist(self, name):
+    def addTherapist(self, name, setTimeCallback=None):
         if name == "" or name in self.therapistData:
             return
 
@@ -103,8 +103,13 @@ class WeekdayFrame(ttk.LabelFrame):
         self.moveTherapistEntryRow()
         self.therapistEntryField.delete(0, "end")
 
-        therapistTimeCallback = self.addTherapistCallback(self.day, name)
-        curTherapistData["canvas"].setTherapistTimes = therapistTimeCallback
+        if setTimeCallback is None:
+            therapistTimeCallback = self.addTherapistCallback(self.day, name)
+            curTherapistData["canvas"].setTherapistTimes =\
+                lambda timeSlots, setActive: therapistTimeCallback(self.day, name, timeSlots, setActive)
+        else:
+            curTherapistData["canvas"].setTherapistTimes =\
+                lambda timeSlots, setActive: setTimeCallback(self.day, name, timeSlots, setActive)
 
         self.therapistData[name] = curTherapistData
         curTherapistData["colorVar"].trace("w", lambda a, b, c: self.updateTherapistColor(name))

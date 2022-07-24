@@ -8,7 +8,7 @@
                   "Freitag": "08:15"},
   "closingTime": {"Montag": "19:05",
                   "Dienstag": "19:05",
-                  "Mittwoch": "19:00",
-                  "Donnerstag": "19:00",
+                  "Mittwoch": "19:05",
+                  "Donnerstag": "19:05",
                   "Freitag": "16:00"}
 }
